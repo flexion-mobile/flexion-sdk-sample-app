@@ -1,0 +1,154 @@
+<ScrollView 
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/settings_scrollView"
+  android:layout_width="fill_parent"
+  android:layout_height="fill_parent"
+  >
+
+	<LinearLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent"
+	    android:orientation="vertical"
+	    android:gravity="center"
+	    android:layout_gravity="center">
+	    
+	    <ImageView
+	        android:id="@+id/screen_wait"
+	        android:src="@drawable/wait" 
+	        android:layout_width="fill_parent"
+	        android:layout_height="fill_parent"
+	        android:gravity="center"
+	        android:layout_gravity="center"
+	        android:visibility="gone" />
+	    
+		<LinearLayout 
+		    android:id="@+id/screen_main"
+		    android:layout_width="fill_parent"
+		    android:layout_height="fill_parent"
+	        android:orientation="vertical"
+	        android:visibility="visible" >
+	    
+		    <LinearLayout 
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:gravity="top"
+		        android:layout_gravity="center"
+		        android:orientation="vertical">
+		    
+		    	<ImageView
+		    	    android:src="@drawable/title"
+		    	    android:id="@+id/title"
+		    	    android:layout_width="wrap_content"
+		    	    android:layout_height="wrap_content"
+		    	    android:layout_gravity="center" />
+		    	
+		    	<ImageView
+		    	    android:src="@drawable/free"
+		    	    android:id="@+id/free_or_premium"
+		    	    android:layout_width="wrap_content"
+		    	    android:layout_height="wrap_content"
+		    	    android:layout_gravity="center"
+		    	    android:layout_marginBottom="20dp"  />
+		    	
+		     </LinearLayout>
+		    	
+		     <LinearLayout
+		        android:layout_width="match_parent"
+		        android:layout_height="match_parent"
+		        android:gravity="center"
+		        android:layout_gravity="center"
+		        android:orientation="vertical">
+		    	
+		    	<ImageView
+		    	    android:src="@drawable/placeholder"
+		    	    android:id="@+id/flower_top"
+		    	    android:layout_width="60dp"
+		    	    android:layout_height="60dp"
+		        	android:layout_gravity="center" />
+		    	    	
+		    	<ImageView
+		    	    android:src="@drawable/placeholder"
+		    	    android:id="@+id/flower_bottom"
+		    	    android:layout_width="60dp"
+		    	    android:layout_height="60dp"
+		        	android:layout_gravity="center"  />
+		    	
+		    	<ImageView
+		    	    android:src="@drawable/ground"
+		    	    android:id="@+id/ground"
+		    	    android:layout_width="60dp"
+		    	    android:layout_height="20dp"
+		    	    android:layout_marginBottom="10dp"
+		        	android:layout_gravity="center"  />
+		    	
+		      </LinearLayout>
+		    	
+		      <LinearLayout 
+		        android:layout_width="match_parent"
+		        android:layout_height="match_parent"
+		        android:gravity="top"
+		        android:layout_gravity="top"
+		        android:orientation="vertical">
+		    	
+		    	<TextView
+		    	    android:id="@+id/player_seeds"
+		    	    android:layout_width="wrap_content"
+		    	    android:layout_height="wrap_content"
+		    	    android:layout_marginBottom="5dp"
+		    	    android:layout_gravity="center"
+		    	    android:textStyle="bold"
+		    	    android:textSize="20sp" />
+		    	
+		    	<LinearLayout
+		    	    android:layout_width="wrap_content"
+		    	    android:layout_height="wrap_content"
+		    	    android:orientation="horizontal"
+		    	    android:layout_gravity="center"
+		    	    android:layout_marginBottom="10dp">
+		    	    
+		            <ImageView
+		    	       android:src="@drawable/grow_flower"
+		    	       android:onClick="onGrowFlowerButtonClicked"
+		    	       android:layout_width="wrap_content"
+		    	       android:layout_height="wrap_content" 
+		    	       android:layout_marginRight="20dp"/>
+		    	
+		        	<ImageView
+		        	   android:src="@drawable/buy_seeds"
+		    	       android:onClick="onBuySeedsButtonClicked"
+		    	       android:layout_width="wrap_content"
+		    	       android:layout_height="wrap_content" />
+		    	
+		    	</LinearLayout>
+		
+		    	<LinearLayout
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:orientation="horizontal"
+		    	    android:layout_gravity="center"
+		            android:layout_marginBottom="10dp">
+		    	
+		    	   <ImageView
+		    	       android:src="@drawable/get_special_theme"
+		    	       android:id="@+id/upgrade_button"
+		    	       android:onClick="onUpgradeAppButtonClicked"
+		    	       android:layout_width="wrap_content"
+		    	       android:layout_height="wrap_content" 
+		               android:layout_marginRight="20dp" />
+		    	   
+		            <ImageView
+		               android:id="@+id/buy_magical_water_button"
+		               android:src="@drawable/get_magical_water"
+		               android:onClick="onBuyMagicalWaterButtonClicked"
+		               android:layout_width="wrap_content"
+		               android:layout_height="wrap_content" />
+		    	   	
+		    	</LinearLayout>
+		    	
+		    </LinearLayout>
+		 
+		</LinearLayout>
+	    
+	</LinearLayout>
+	
+</ScrollView>
