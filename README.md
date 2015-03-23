@@ -5,8 +5,8 @@ Flexion SDK Sample App - "Fun Flowers"
 
 Introduction
 ---------------
-This is an example app using the Flexion billing SDK. The app uses a local simulated Flexion
-billing server, so it works as a stand-alone application. 
+This is an example app using the Flexion billing SDK. For more information on the Flexion SDK, see **[flexionmobile.com](http://flexionmobile.com)**
+
 
 This app is a simple game where the player can buy seeds and use it to 'grow'
 randomly generated flowers. The player starts the game with a set amount of seeds. 
@@ -18,6 +18,8 @@ for the app.
 
 The user can also purchase a subscription ("magical water") which will 
 make the flowers they grow larger. 
+
+The app uses a local simulated Flexion billing server, so it works as a stand-alone application. 
 
 <img src="/images/screenshot-0.png" align="left" height="620" width="349" hspace="5" vspace="20">
 <img src="/images/screenshot-1.png" align="left" height="620" width="349" hspace="5" vspace="20">
