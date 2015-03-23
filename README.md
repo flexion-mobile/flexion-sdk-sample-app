@@ -63,3 +63,9 @@ Credits
 ---------------
 
 This app is based on [TrivalDrive](http://developer.android.com/training/in-app-billing/preparing-iab-app.html#GetSample) by Bruno Oliveira (Google). TrivialDrive is licensed under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). Modified to Fun Flowers by Jonathan Coe (Flexion Mobile). 
+
+
+License
+---------------
+
+This application is licensed under the under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). Please note that this does not include the file "flexion-sdk.jar" found in the "libs" directory. This file may be used with the application but is not released under the Apache License Version 2.0. 
