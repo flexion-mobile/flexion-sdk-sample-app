@@ -60,5 +60,4 @@ is also very important!
 Credits
 ---------------
 
-TrivalDrive originally by Bruno Oliveira (Google). Modified to
-Fun Flowers by Jonathan Coe (Flexion). 
+This app is based on TrivalDrive by Bruno Oliveira (Google). TrivialDrive is licensed under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). Modified to Fun Flowers by Jonathan Coe (Flexion Mobile). 
