@@ -1,3 +1,5 @@
+![Flexion Logo](/images/flexion-logo.png?raw=true)
+
 Flexion SDK Sample App - "Fun Flowers"
 =======
 
@@ -17,7 +19,11 @@ for the app.
 The user can also purchase a subscription ("magical water") which will 
 make the flowers they grow larger. 
 
+<img src="/images/screenshot-0.png" align="left" height="620" width="349" hspace="5" vspace="20">
+<img src="/images/screenshot-1.png" align="left" height="620" width="349" hspace="5" vspace="20">
 
+
+---------------
 Item consumption mechanics
 ---------------
 
