@@ -59,6 +59,12 @@ we have to apply its effects to our world and consume it. This
 is also very important!
 
 
+Build Instructions
+---------------
+
+See [BUILDING.md](BUILDING.md)
+
+
 Credits
 ---------------
 
