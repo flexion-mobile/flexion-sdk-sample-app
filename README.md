@@ -26,7 +26,7 @@ The app uses a local simulated Flexion billing server, so it works as a stand-al
 
 
 ---------------
-Item consumption mechanics
+Item Consumption Mechanics
 ---------------
 
 It's important to note the consumption mechanics for each item:
