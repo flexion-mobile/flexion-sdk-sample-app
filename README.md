@@ -69,3 +69,6 @@ License
 ---------------
 
 This application is licensed under the under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). Please note that this does not include the file "flexion-sdk.jar" found in the "libs" directory. This file may be used with the application but is not released under the Apache License Version 2.0. 
+
+TrivialDrive copyright 2012 Google Inc. <br>
+Fun Flowers copyright 2015 Flexion Mobile Ltd.
