@@ -62,7 +62,7 @@ MAGICAL WATER: this is a subscription, and subscriptions can't be consumed.<br><
 SEEDS: when seeds are purchased, the "seeds" item is then owned. We
 consume it when we apply that item's effects to our app's world, which to
 us means giving the player a fixed number of seeds. This happens immediately
-after purchase! It's at this point (and not when the user drives) that the
+after purchase! It's at this point (and not when the user grows a flower) that the
 "seeds" item is CONSUMED. Consumption should always happen when your game
 world was safely updated to apply the effect of the purchase. So, in an
 example scenario:<br><br>
