@@ -20,8 +20,6 @@ package com.flexion.funflowers.billing;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import org.json.JSONException;
 
@@ -80,21 +78,6 @@ public class BillingHelper {
     /** Are subscriptions supported? */
     private static final boolean SUBSCRIPTIONS_SUPPORTED = true;
     
-    /** The amount of time which we allow for billing requests */
-    private static final int REQUEST_TIMEOUT_SECONDS = 60;
-    
-    /** A flag used for recording whether the most recent 'get purchases' query
-     * was successful.*/
-    private boolean mPurchasesQuerySuccessful;
-    
-    /** A flag used for recording whether the most recent 'get item details' query
-     * was successful.*/
-    private boolean mItemDetailsQuerySuccessful;
-    
-    /** A flag used for recording whether the most recent 'consume item' attempt
-     * was successful*/
-    private boolean mConsumeAttemptSuccessful;
-    
     /** This value controls whether or not debug messages will be logged. This should be
      * set to false in production usage */
     private static final boolean DEBUG_LOGGING_ENABLED = true;
@@ -121,7 +104,7 @@ public class BillingHelper {
         mInventory = new Inventory();
         logDebug("Inventory instance created.");
     }
-
+    
     /**
      * Dispose of object, releasing resources. It's very important to call this
      * method when you are done with this object. It will release any resources
@@ -138,7 +121,7 @@ public class BillingHelper {
         mContext = null;
         mPurchaseListener = null;
     }
-
+    
     /**
      * Checks whether the running instance of this class has been disposed of. 
      * If so, this method throws an IllegalStateException. 
@@ -146,13 +129,13 @@ public class BillingHelper {
     private void checkNotDisposed() {
         if (mDisposed) throw new IllegalStateException("BillingHelper was disposed of, so it cannot be used.");
     }
-
+    
     /** Returns whether subscriptions are supported. */
     public boolean subscriptionsSupported() {
         checkNotDisposed();
         return SUBSCRIPTIONS_SUPPORTED;
     }
-
+    
     /**
      * Callback that notifies when a purchase is finished.
      */
@@ -168,30 +151,30 @@ public class BillingHelper {
          */
         public void onIabPurchaseFinished(BillingResult result, PurchasedItem info);
     }
-
+    
     // The listener registered on launchPurchaseFlow, which we have to call back when
     // the purchase finishes
     OnIabPurchaseFinishedListener mPurchaseListener;
-
+    
     public void launchPurchaseFlow(Activity act, String item, int requestCode, OnIabPurchaseFinishedListener listener) {
         launchPurchaseFlow(act, item, requestCode, listener, "");
     }
-
+    
     public void launchPurchaseFlow(Activity act, String item, int requestCode,
             OnIabPurchaseFinishedListener listener, String extraData) {
         launchPurchaseFlow(act, item, ItemType.IN_APP, requestCode, listener, extraData);
     }
-
+    
     public void launchSubscriptionPurchaseFlow(Activity act, String item, int requestCode,
             OnIabPurchaseFinishedListener listener) {
         launchSubscriptionPurchaseFlow(act, item, requestCode, listener, "");
     }
-
+    
     public void launchSubscriptionPurchaseFlow(Activity act, String item, int requestCode,
             OnIabPurchaseFinishedListener listener, String extraData) {
         launchPurchaseFlow(act, item, ItemType.SUBSCRIPTION, requestCode, listener, extraData);
     }
-
+    
     /**
      * Initiate the UI flow for an in-app purchase. Call this method to initiate an in-app purchase,
      * which will involve bringing up a Flexion billing screen. The calling activity will be paused while
@@ -305,7 +288,7 @@ public class BillingHelper {
 		// Pass the BillingResult reporting the failed purchase to the listener
 		listener.onIabPurchaseFinished(result, null);
     }
-
+    
     /**
      * Queries the inventory. This will query all owned items from the server, as well as
      * information on additional items, if specified.
@@ -323,34 +306,23 @@ public class BillingHelper {
                                         List<String> moreSubscriptionItems) throws BillingException { 
         checkNotDisposed();
         try {
-            boolean querySuccess = queryPurchases(ItemType.IN_APP);
-            if (!querySuccess) {
-                throw new BillingException("Error refreshing inventory (querying owned items).");
-            }
-            
+        	// Query for purchases
+            queryPurchases(ItemType.IN_APP);
+                       
             if (queryItemDetails) {
-            	querySuccess = queryItemDetails(ItemType.IN_APP, moreItems);
-                if (!querySuccess) {
-                    throw new BillingException("Error refreshing inventory (querying item details).");
-                }
+            	queryItemDetails(ItemType.IN_APP, moreItems);
             }
 
             // If subscriptions are supported, then also query for subscriptions
             if (SUBSCRIPTIONS_SUPPORTED) {
-            	querySuccess = queryPurchases(ItemType.SUBSCRIPTION);
-                if (!querySuccess) {
-                    throw new BillingException("Error refreshing inventory (querying owned subscriptions).");
-                }
+            	queryPurchases(ItemType.SUBSCRIPTION);
 
                 if (queryItemDetails) {
-                	querySuccess = queryItemDetails(ItemType.SUBSCRIPTION, moreItems);
-                    if (!querySuccess) {
-                        throw new BillingException("Error refreshing inventory (querying subscription details).");
-                    }
+                	queryItemDetails(ItemType.SUBSCRIPTION, moreItems);
                 }
             }
-
-            // Inform the listener that the inventory query succeeded
+            
+            // Inform the listener that the inventory query has finished
             listener.onQueryInventoryFinished(new BillingResult(true, "Successfully queried inventory"), mInventory);
         }
         catch (Exception e) {
@@ -361,7 +333,7 @@ public class BillingHelper {
             listener.onQueryInventoryFinished(new BillingResult(true, "Failed to query the inventory"), mInventory);
         }
     }
-
+    
     /**
      * Listener that notifies when an inventory query operation completes.
      */
@@ -374,7 +346,7 @@ public class BillingHelper {
          */
         public void onQueryInventoryFinished(BillingResult result, Inventory inv);
     }
-
+    
     /**
      * Consumes a given in-app product. Consuming can only be done on an item
      * that's owned, and as a result of consumption, the user will no longer own it.
@@ -384,7 +356,7 @@ public class BillingHelper {
      * 
      * @throws BillingException if there is a problem during consumption.
      */
-    public void consume(final PurchasedItem purchasedItem, OnConsumeFinishedListener listener) {
+    public void consume(final PurchasedItem purchasedItem, final OnConsumeFinishedListener listener) {
     	
         checkNotDisposed();
         
@@ -403,49 +375,29 @@ public class BillingHelper {
             
             logDebug("Consuming item: " + itemId + ", token: " + token);
             
-	        // Set up a CountDownLatch to await the result of the item details query
-	        final CountDownLatch latch = new CountDownLatch(1);
-            
-            // Reset the flag that records whether or not the latest consume attempt was successful
-            mConsumeAttemptSuccessful = false;
-            
+            // Create the callback instance and make the 'consume item' request
             OnConsumeFinishedCallback onConsumeFinishedCallBack = new OnConsumeFinishedCallback() {
             	public void onSuccess() {
             		logDebug("OnConsumeFinishedCallback.onSuccess() called");
             		mInventory.erasePurchase(purchasedItem.getItemId());
-            		mConsumeAttemptSuccessful = true;
-            		latch.countDown();
+            		logDebug("Successfully consumed item: " + purchasedItem.getItemId());
+            		
+                    // Inform the listener that the item has been consumed
+                    listener.onConsumeFinished(purchasedItem, new BillingResult(true, "Successfully consumed item"));
             	}
             	public void onError(BillingError error) {
 	                logError("BillingHelper.OnQueryGetPurchasesFinishedCallback() returned an error. The error's description was:\n"
 	                		+ error.getDescription());
-	                latch.countDown();
 	            }
             };
-            
-            // Create the callback instance and make the 'consume item' request
             mBillingService.consumePurchase(token, onConsumeFinishedCallBack);
-            
-	        // Await the result of the request
-	        latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-            
-	        // Respond to the result of the request
-            if (mConsumeAttemptSuccessful) {
-               logDebug("Successfully consumed item: " + itemId);
-            }
-            else {
-               logDebug("Failed to consume item " + itemId);
-            }
-            
-            // Inform the listener that the item has been consumed
-            listener.onConsumeFinished(purchasedItem, new BillingResult(true, "Successfully consumed item"));
         }
         catch (Exception e) {
             logError("Exception occurred in BillingHelper.consume(). The exception message was:\n"
             		+ e.getMessage());
         }
     }
-
+    
     /**
      * Callback that notifies when a consumption operation finishes.
      */
@@ -458,7 +410,7 @@ public class BillingHelper {
          */
         public void onConsumeFinished(PurchasedItem purchase, BillingResult result);
     }
-
+    
     /**
      * Callback that notifies when a multi-item consumption operation finishes.
      */
@@ -471,35 +423,26 @@ public class BillingHelper {
          */
         public void onConsumeMultiFinished(List<PurchasedItem> purchases, List<BillingResult> results);
     }
-        
+    
     /**
      * Makes a query for purchases of the given item type
      * 
      * @param itemType - The item type which we are querying for
      * 
-     * @return A boolean indicating the success or failure of the query
-     * 
      * @throws JSONException
      * @throws RemoteException
      */
-    private boolean queryPurchases(ItemType itemType) throws JSONException, RemoteException {
+    private void queryPurchases(ItemType itemType) throws JSONException, RemoteException {
         logDebug("Querying owned items, item type: " + itemType);
         logDebug("Package name: " + mContext.getPackageName());
         
         try {
-	        // Set up a CountDownLatch to await the result of the item details query
-	        final CountDownLatch latch = new CountDownLatch(1);
-	        
-	        // Reset the flag that records the success or failure of this query
-	        mPurchasesQuerySuccessful = false;
-	
 	        // Create a callback object to handle any response to the purchases query
 	        OnQueryGetPurchasesFinishedCallback queryGetPurchasesCallback = new OnQueryGetPurchasesFinishedCallback() {
 	        	@Override
 	            public void onSuccess(ItemType itemType, Map<String, Purchase> purchases)
 	            {
-					for (Map.Entry<String, Purchase> entry : purchases.entrySet())
-					{
+					for (Map.Entry<String, Purchase> entry : purchases.entrySet()) {
 					    // Log the ID of the owned item
 						Purchase purchase = entry.getValue();
 					    logDebug("Item is owned: " + purchase.getItemId());
@@ -510,37 +453,21 @@ public class BillingHelper {
 					    // Add the PurchasedItem to the inventory
 						mInventory.addPurchase(purchasedItem);
 					}
-	        		
-	        		// Report the success of the query
-	        		mPurchasesQuerySuccessful = true;
-	        		latch.countDown();
 	            }
 	        	@Override
 	            public void onError(BillingError error) {
 	                logError("BillingHelper.OnQueryGetPurchasesFinishedCallback() returned an error. The error's description was:\n"
 	                		+ error.getDescription());
-	                
-	                // Report the failure of the query, along with the error message
-			        mItemDetailsQuerySuccessful = false;
-	                latch.countDown();
 	            }
 	        };
 	        
 	        // Make the 'get purchases' query call. Passing in an empty List gives us all
 	        // purchased items rather than only some.
 	        mBillingService.getPurchases(itemType, new ArrayList<String>(), queryGetPurchasesCallback);
-	        
-	        // Await the result of the item details query
-	        latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-	        
-	        // Return whether or not the query was successful
-	        return mPurchasesQuerySuccessful;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
         	logError("Exception occurred in BillingHelper.queryPurchases(). The exception message was:\n"
         			+ e.getMessage());
-        	return false;
         }
     }
     
@@ -555,7 +482,7 @@ public class BillingHelper {
      * 
      * @return A boolean indicating the success or failure of the query
      */
-    private boolean queryItemDetails(ItemType itemType, List<String> moreItems) {
+    private void queryItemDetails(ItemType itemType, List<String> moreItems) {
         try {	
 	    	logDebug("Querying Item details.");
 	    	
@@ -573,14 +500,8 @@ public class BillingHelper {
 	        // If there are no items to get the details of, return
 	        if (itemList.size() == 0) {
 	            logDebug("BillingHelper.queryPrices(): nothing to do because there are no items.");
-	            return true;
+	            return;
 	        }
-	        
-	        // Set up a CountDownLatch to await the result of the item details query
-	        final CountDownLatch latch = new CountDownLatch(1);
-	        
-	        // Reset the flag that records whether this query is successful
-	        mItemDetailsQuerySuccessful = false;
 	
 	        // Create a callback object for handling the response to the item details query 
 	        OnQueryItemDetailsFinishedCallback queryItemDetailsCallBack = new OnQueryItemDetailsFinishedCallback() {
@@ -592,37 +513,21 @@ public class BillingHelper {
 			        	logDebug("Got item: " + item.getId());
 				        mInventory.addItemDetails(item);
 			        }
-			        
-			        // Report the success of the query
-			        mItemDetailsQuerySuccessful = true;
-			        latch.countDown();
 			    }
 	
 				@Override
 				public void onError(BillingError error) {
 	                logError("BillingHelper.OnQueryItemDetailsFinishedCallback() returned an error. The error's description was:\n"
 	                		+ error.getDescription());
-	                
-	                // Report the failure of the query, along with the error message
-			        mItemDetailsQuerySuccessful = false;
-	                latch.countDown();
 				}
 	        };
 	        
 	        // Make the query call for the item details
 	        mBillingService.getItemDetails(ItemType.IN_APP, itemList, queryItemDetailsCallBack);
-	        
-	        // Await the result of the item details query
-	        latch.await(REQUEST_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-	        
-	        // Return whether or not the query was successful
-	        return mItemDetailsQuerySuccessful;
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
         	logError("Exception occurred in BillingHelper.queryItemDetails(). The exception message was:\n"
         			+ e.getMessage());
-        	return false;
         }
     }
     
