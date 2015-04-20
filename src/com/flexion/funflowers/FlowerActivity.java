@@ -142,6 +142,9 @@ public class FlowerActivity extends Activity {
         setContentView(R.layout.activity_flower);
         
         try {
+			// Display the wait screen until we have loaded all the game data (e.g. what items are owned)
+        	setWaitScreen(true);
+			
             // Load game data
             loadData();
             
