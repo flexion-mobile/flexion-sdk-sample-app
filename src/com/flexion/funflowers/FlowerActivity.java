@@ -48,7 +48,7 @@ The user can also purchase a "premium upgrade" that unlocks a special theme
 for the app.<br><br>
 
 The user can also purchase a subscription ("magical water") which will 
-make the flowers they grow larger and possibly more beautiful. <br><br>
+make the flowers they grow larger. <br><br>
 
 It's important to note the consumption mechanics for each item:<br><br>
 
@@ -109,10 +109,18 @@ public class FlowerActivity extends Activity {
     
     /** The number of seeds that the player starts with when they first run the game */
     private static final int PLAYER_STARTING_SEEDS = 20;
-        
+    
+    /** A key value used to reference a stored variable that records whether the player
+     * has the premium upgrade */
+    private static final String KEY_IS_PREMIUM = "key_is_premium";
+    
     /** A key value used to reference a stored variable that records the player's
      * available number of seeds */
     private static final String KEY_PLAYER_SEEDS = "key_player_seeds";
+    
+    /** A key value used to reference a stored variable that records whether the
+     * player is subscribed to the magical water upgrade */
+    private static final String KEY_SUBSCRIBED_TO_MAGICAL_WATER = "key_subscribed_to_magical_water";
         
     /** Current number of seeds that the player has */
     private long mPlayerSeeds;
@@ -139,15 +147,14 @@ public class FlowerActivity extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate() called");
+        
         setContentView(R.layout.activity_flower);
         
         try {
-			// Display the wait screen until we have loaded all the game data (e.g. what items are owned)
+        	// Display the wait screen until we have loaded all the game data (e.g. what items are owned)
         	setWaitScreen(true);
-			
-            // Load game data
-            loadData();
-            
+        	
             // Create an instance of the helper class for in-app-billing
             Log.d(TAG, "Creating IabHelper instance");
             mBillingHelper = new BillingHelper(this);
@@ -157,6 +164,23 @@ public class FlowerActivity extends Activity {
         }
         catch (Exception e) {
         	Log.e(TAG, "Exception occurred in FlowerActivity.onCreate(). The exception message was: "
+        			+ e.getMessage());
+        }
+    }
+    
+	@Override
+	protected void onResume() 
+	{
+		super.onResume();
+		Log.i(TAG, "onResume() called");
+		
+        try {
+            // Load game data and update the UI to reflect it
+            loadData();
+            updateUi();
+        }
+        catch (Exception e) {
+        	Log.e(TAG, "Exception occurred in FlowerActivity.onResume(). The exception message was: "
         			+ e.getMessage());
         }
     }
@@ -330,13 +354,16 @@ public class FlowerActivity extends Activity {
 
             // Do we have the premium theme?
             PurchasedItem premiumPurchase = inventory.getPurchase(ITEM_PREMIUM_THEME);
-            mIsPremium = (premiumPurchase != null && verifyDeveloperPayload(premiumPurchase));
+            if (premiumPurchase != null && verifyDeveloperPayload(premiumPurchase)) {
+            	mIsPremium = true;
+            }
             Log.d(TAG, "User " + (mIsPremium ? "IS premium" : "is NOT premium"));
 
             // Do we have the  magical water subscription?
             PurchasedItem magicalWaterPurchase = inventory.getPurchase(ITEM_MAGICAl_WATER);
-            mSubscribedToMagicalWater = (magicalWaterPurchase != null &&
-                    verifyDeveloperPayload(magicalWaterPurchase));
+            if (magicalWaterPurchase != null && verifyDeveloperPayload(magicalWaterPurchase)) {
+            	mSubscribedToMagicalWater = true;
+            }
             Log.d(TAG, "User " + (mSubscribedToMagicalWater ? "HAS" : "does NOT have")
                         + " magical water subscription");
 
@@ -392,7 +419,7 @@ public class FlowerActivity extends Activity {
 	            
 	            // If we reached this point, the purchase was successful
 	            Log.d(TAG, "Purchase successful.");
-	
+	            
 	            if (purchase.getItemId().equals(ITEM_SEEDS)) {
 	                // The user purchased one unit of seeds. Consume it.
 	                Log.d(TAG, "Purchase is seeds. Starting seed consumption.");
@@ -403,6 +430,7 @@ public class FlowerActivity extends Activity {
 	                Log.d(TAG, "Purchase is premium theme. Congratulating user.");
 	                displayAlert("Thank you for upgrading to premium!");
 	                mIsPremium = true;
+		            saveData();
 	                updateUi();
 	                setWaitScreen(false);
 	            }
@@ -411,6 +439,7 @@ public class FlowerActivity extends Activity {
 	                Log.d(TAG, "Magical water subscription purchased.");
 	                displayAlert("Thank you for subscribing to the magical water upgrade!");
 	                mSubscribedToMagicalWater = true;
+		            saveData();
 	                updateUi();
 	                setWaitScreen(false);
 	            }
@@ -483,7 +512,8 @@ public class FlowerActivity extends Activity {
 			        
 			        // If the user is subscribed to the 'magical water' upgrade, enlarge the flowers displayed
 			        if (mSubscribedToMagicalWater) {
-						LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ENLARGED_FLOWER_LAYOUT_SIZE, ENLARGED_FLOWER_LAYOUT_SIZE);
+						LinearLayout.LayoutParams layoutParams = 
+								new LinearLayout.LayoutParams(ENLARGED_FLOWER_LAYOUT_SIZE, ENLARGED_FLOWER_LAYOUT_SIZE);
 						flowerTop.setLayoutParams(layoutParams);
 						flowerBottom.setLayoutParams(layoutParams);	
 			        }
@@ -543,9 +573,14 @@ public class FlowerActivity extends Activity {
          * in SharedPreferences.
          */
         SharedPreferences.Editor sharedPrefs = getPreferences(MODE_PRIVATE).edit();
+        sharedPrefs.putBoolean(KEY_IS_PREMIUM, mIsPremium);
         sharedPrefs.putLong(KEY_PLAYER_SEEDS, mPlayerSeeds);
+        sharedPrefs.putBoolean(KEY_SUBSCRIBED_TO_MAGICAL_WATER, mSubscribedToMagicalWater);
         sharedPrefs.commit();
-        Log.d(TAG, "Saved data: current player seeds = " + mPlayerSeeds);
+        Log.i(TAG, "Saved player game data:\n"
+        		+ "Player seeds: " + mPlayerSeeds + "\n"
+        		+ "Player is premium: " + mIsPremium + "\n"
+        		+ "Player subscribed to magical water: " + mSubscribedToMagicalWater);
     }
     
     /**
@@ -553,7 +588,12 @@ public class FlowerActivity extends Activity {
      */
     private void loadData() {
         SharedPreferences sharedPrefs = getPreferences(MODE_PRIVATE);
+        mIsPremium = sharedPrefs.getBoolean(KEY_IS_PREMIUM, false);
         mPlayerSeeds = sharedPrefs.getLong(KEY_PLAYER_SEEDS, PLAYER_STARTING_SEEDS);
-        Log.d(TAG, "Loaded data: current player seeds = " + mPlayerSeeds);
+        mSubscribedToMagicalWater = sharedPrefs.getBoolean(KEY_SUBSCRIBED_TO_MAGICAL_WATER, false);
+        Log.i(TAG, "Loaded player game data:\n"
+        		+ "Player seeds: " + mPlayerSeeds + "\n"
+        		+ "Player is premium: " + mIsPremium + "\n"
+        		+ "Player subscribed to magical water: " + mSubscribedToMagicalWater);
     }
 }
