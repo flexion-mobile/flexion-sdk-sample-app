@@ -53,9 +53,6 @@ import com.flexionmobile.sdk.billing.PurchaseState;
  * @author Bruno Oliveira (Google), modified by Jonathan Coe (Flexion)
  */
 public class BillingHelper {
-	
-    /** Is setup done? */
-    boolean mSetupDone = false;
 
     /** Has this object been disposed of? (If so, we should ignore callbacks, etc) */
     boolean mDisposed = false;
@@ -66,12 +63,6 @@ public class BillingHelper {
     /** The FlexionBillingService instance */
     private FlexionBillingService mBillingService;
 
-    /** The request code used to launch purchase flow */
-    int mRequestCode;
-
-    /** The item type of the current purchase flow */
-    ItemType mPurchasingItemType;
-    
     /** The inventory of purchasable items */
     private Inventory mInventory;
     
@@ -86,9 +77,7 @@ public class BillingHelper {
     private static final String TAG = "BillingHelper";
     
     /**
-     * Creates an instance. After creation, it will not yet be ready to use. You must perform
-     * setup by calling {@link #startSetup} and wait for setup to complete. This constructor does not
-     * block and is safe to call from a UI thread.
+     * Creates a BillingHelper instance.
      *
      * @param context - Your application or Activity context. Needed to bind to the in-app billing service.
      */
@@ -106,8 +95,8 @@ public class BillingHelper {
     }
     
     /**
-     * Dispose of object, releasing resources. It's very important to call this
-     * method when you are done with this object. It will release any resources
+     * Dispose of the BillingHelper object, releasing its resources. It's very important
+     * to call this method when you are done with this object. It will release any resources
      * used by it such as service connections. Naturally, once the object is
      * disposed of, it can't be used again.
      */
@@ -149,51 +138,26 @@ public class BillingHelper {
          * @param result The result of the purchase.
          * @param info The purchase information (null if purchase failed)
          */
-        public void onIabPurchaseFinished(BillingResult result, PurchasedItem info);
+        void onIabPurchaseFinished(BillingResult result, PurchasedItem info);
     }
     
     // The listener registered on launchPurchaseFlow, which we have to call back when
     // the purchase finishes
     OnIabPurchaseFinishedListener mPurchaseListener;
-    
-    public void launchPurchaseFlow(Activity act, String item, int requestCode, OnIabPurchaseFinishedListener listener) {
-        launchPurchaseFlow(act, item, requestCode, listener, "");
-    }
-    
-    public void launchPurchaseFlow(Activity act, String item, int requestCode,
-            OnIabPurchaseFinishedListener listener, String extraData) {
-        launchPurchaseFlow(act, item, ItemType.IN_APP, requestCode, listener, extraData);
-    }
-    
-    public void launchSubscriptionPurchaseFlow(Activity act, String item, int requestCode,
-            OnIabPurchaseFinishedListener listener) {
-        launchSubscriptionPurchaseFlow(act, item, requestCode, listener, "");
-    }
-    
-    public void launchSubscriptionPurchaseFlow(Activity act, String item, int requestCode,
-            OnIabPurchaseFinishedListener listener, String extraData) {
-        launchPurchaseFlow(act, item, ItemType.SUBSCRIPTION, requestCode, listener, extraData);
-    }
-    
+
     /**
      * Initiate the UI flow for an in-app purchase. Call this method to initiate an in-app purchase,
-     * which will involve bringing up a Flexion billing screen. The calling activity will be paused while
-     * the user interacts with the billing UI, and the result will be delivered via the activity's
-     * {@link android.app.Activity#onActivityResult} method, at which point you must call
-     * this object's {@link #handleActivityResult} method to continue the purchase flow. This method
-     * MUST be called from the UI thread of the Activity.
+     * which will involve bringing up a Flexion billing screen.
      *
      * @param activity The calling activity.
      * @param item The item to purchase.
      * @param itemType indicates if it's a product or a subscription
-     * @param requestCode A request code (to differentiate from other responses --
-     *     as in {@link android.app.Activity#startActivityForResult}).
      * @param listener The listener to notify when the purchase process finishes
      * @param developerPayload Extra data (developer payload), which will be returned with the purchase data
      *     when the purchase completes. This extra data will be permanently bound to that purchase
      *     and will always be returned when the purchase is queried.
      */
-    public void launchPurchaseFlow(Activity activity, String item, ItemType itemType, int requestCode,
+    public void launchPurchaseFlow(Activity activity, String item, ItemType itemType,
                         final OnIabPurchaseFinishedListener listener, String developerPayload) {
     	logDebug("BillingHelper.launchPurchaseFlow() called");
     	
@@ -232,8 +196,8 @@ public class BillingHelper {
 	            }
 	            public void onError(BillingError error) {
 	                logError("BillingHelper.launchPurchaseFlow.purchaseFinishedCallback returned an error. "
-	                		+ "The error's description was:\n"
-	                		+ error.getDescription());
+                            + "The error's description was:\n"
+                            + error.getDescription());
 	                handlePurchaseResult(null, listener, false, error);
 	            }
             };
@@ -241,10 +205,9 @@ public class BillingHelper {
             logDebug("About to run mBillingService.launchPurchaseFlow()");
             mBillingService.launchPurchaseFlow(activity, item, itemType, developerPayload, purchaseFinishedCallback);
         }
-        catch (Exception e) {
-           logError("Exception occurred in BillingHelper.launchPurchaseFlow(). The exception message was:\n"
-            		+ e.getMessage());
-           handlePurchaseResult(null, listener, false, null);
+        catch (Exception exception) {
+           logException("Exception occurred in BillingHelper.launchPurchaseFlow()", exception);
+            handlePurchaseResult(null, listener, false, null);
         }
     }
     
@@ -298,12 +261,10 @@ public class BillingHelper {
      *     as purchase information.
      * @param moreItems additional PRODUCT items to query information on, regardless of ownership.
      *     Ignored if null or if queryItemDetails is false.
-     * @param moreSubscriptionItems additional SUBSCRIPTIONS items to query information on, regardless of ownership.
-     *     Ignored if null or if queryItemDetails is false.
      * @throws BillingException if a problem occurs while refreshing the inventory.
      */
-    public void queryInventory(QueryInventoryFinishedListener listener, boolean queryItemDetails, List<String> moreItems,
-                                        List<String> moreSubscriptionItems) throws BillingException { 
+    public void queryInventory(QueryInventoryFinishedListener listener, boolean queryItemDetails, List<String> moreItems)
+            throws BillingException {
         checkNotDisposed();
         try {
         	// Query for purchases
@@ -325,9 +286,8 @@ public class BillingHelper {
             // Inform the listener that the inventory query has finished
             listener.onQueryInventoryFinished(new BillingResult(true, "Successfully queried inventory"), mInventory);
         }
-        catch (Exception e) {
-            logError("Exception occurred in BillingHelper.queryInventory(). The exception message was:\n"
-            		+ e.getMessage());
+        catch (Exception exception) {
+            logException("Exception occurred in BillingHelper.queryInventory()", exception);
             
             // Inform the listener that the inventory query failed
             listener.onQueryInventoryFinished(new BillingResult(true, "Failed to query the inventory"), mInventory);
@@ -344,7 +304,7 @@ public class BillingHelper {
          * @param result The result of the operation.
          * @param inv The inventory.
          */
-        public void onQueryInventoryFinished(BillingResult result, Inventory inv);
+        void onQueryInventoryFinished(BillingResult result, Inventory inv);
     }
     
     /**
@@ -353,8 +313,6 @@ public class BillingHelper {
      *
      * @param purchasedItem The PurchaseInfo that represents the item to consume.
      * @param listener - A listener to wait for a single item to be consumed
-     * 
-     * @throws BillingException if there is a problem during consumption.
      */
     public void consume(final PurchasedItem purchasedItem, final OnConsumeFinishedListener listener) {
     	
@@ -370,7 +328,7 @@ public class BillingHelper {
             String token = purchasedItem.getToken();
             String itemId = purchasedItem.getItemId();
             if (token == null || token.equals("")) {
-               logError("PurchaseInfo is missing token for item: " + itemId + " " + purchasedItem);
+                logError("PurchaseInfo is missing token for item: " + itemId + " " + purchasedItem);
             }
             
             logDebug("Consuming item: " + itemId + ", token: " + token);
@@ -386,15 +344,17 @@ public class BillingHelper {
                     listener.onConsumeFinished(purchasedItem, new BillingResult(true, "Successfully consumed item"));
             	}
             	public void onError(BillingError error) {
-	                logError("BillingHelper.OnQueryGetPurchasesFinishedCallback() returned an error. The error's description was:\n"
-	                		+ error.getDescription());
+	                logError("BillingHelper.OnConsumeFinishedCallback() returned an error. The error's description was:\n"
+                            + error.getDescription());
+
+                    // Inform the listener that the item has not been consumed
+                    listener.onConsumeFinished(purchasedItem, new BillingResult(false, "An error occurred while consuming an item"));
 	            }
             };
             mBillingService.consumePurchase(token, onConsumeFinishedCallBack);
         }
-        catch (Exception e) {
-            logError("Exception occurred in BillingHelper.consume(). The exception message was:\n"
-            		+ e.getMessage());
+        catch (Exception exception) {
+            logException("Exception occurred in BillingHelper.consume()", exception);
         }
     }
     
@@ -408,20 +368,7 @@ public class BillingHelper {
          * @param purchase The purchase that was (or was to be) consumed.
          * @param result The result of the consumption operation.
          */
-        public void onConsumeFinished(PurchasedItem purchase, BillingResult result);
-    }
-    
-    /**
-     * Callback that notifies when a multi-item consumption operation finishes.
-     */
-    public interface OnConsumeMultiFinishedListener {
-        /**
-         * Called to notify that a consumption of multiple items has finished.
-         *
-         * @param purchases The purchases that were (or were to be) consumed.
-         * @param results The results of each consumption operation, corresponding to each item.
-         */
-        public void onConsumeMultiFinished(List<PurchasedItem> purchases, List<BillingResult> results);
+        void onConsumeFinished(PurchasedItem purchase, BillingResult result);
     }
     
     /**
@@ -457,7 +404,7 @@ public class BillingHelper {
 	        	@Override
 	            public void onError(BillingError error) {
 	                logError("BillingHelper.OnQueryGetPurchasesFinishedCallback() returned an error. The error's description was:\n"
-	                		+ error.getDescription());
+                            + error.getDescription());
 	            }
 	        };
 	        
@@ -465,9 +412,8 @@ public class BillingHelper {
 	        // purchased items rather than only some.
 	        mBillingService.getPurchases(itemType, new ArrayList<String>(), queryGetPurchasesCallback);
         }
-        catch (Exception e) {
-        	logError("Exception occurred in BillingHelper.queryPurchases(). The exception message was:\n"
-        			+ e.getMessage());
+        catch (Exception exception) {
+        	logException("Exception occurred in BillingHelper.queryPurchases()", exception);
         }
     }
     
@@ -478,9 +424,7 @@ public class BillingHelper {
      * 
      * @param itemType - The item type to make the query for
      * @param moreItems - Any items to be queried which are not already
-     * part of the supplied Inventory object
-     * 
-     * @return A boolean indicating the success or failure of the query
+     * part of the supplied Inventory object.
      */
     private void queryItemDetails(ItemType itemType, List<String> moreItems) {
         try {	
@@ -518,16 +462,15 @@ public class BillingHelper {
 				@Override
 				public void onError(BillingError error) {
 	                logError("BillingHelper.OnQueryItemDetailsFinishedCallback() returned an error. The error's description was:\n"
-	                		+ error.getDescription());
+                            + error.getDescription());
 				}
 	        };
 	        
 	        // Make the query call for the item details
 	        mBillingService.getItemDetails(ItemType.IN_APP, itemList, queryItemDetailsCallBack);
         }
-        catch (Exception e) {
-        	logError("Exception occurred in BillingHelper.queryItemDetails(). The exception message was:\n"
-        			+ e.getMessage());
+        catch (Exception exception) {
+        	logException("Exception occurred in BillingHelper.queryItemDetails()", exception);
         }
     }
     
@@ -556,9 +499,19 @@ public class BillingHelper {
     }
     
     /**
-     * Logs an error message
+     * Logs an exception
      *  
-     * @param message - The message to be logged
+     * @param message - A message about the exception to be logged
+     * @param exception - The exception to be logged
+     */
+    private void logException(String message, Exception exception) {
+        Log.e(TAG, message, exception);
+    }
+
+    /**
+     * Logs an error message
+     *
+     * @param message - The error message to be logged
      */
     private void logError(String message) {
         Log.e(TAG, message);

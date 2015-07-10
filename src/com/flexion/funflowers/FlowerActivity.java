@@ -104,9 +104,6 @@ public class FlowerActivity extends Activity {
      to grow flowers with */
     private static final int SEEDS_PER_PURCHASE = 20;
     
-    /** (arbitrary) request code for the purchase flow */
-    private static final int RC_REQUEST = 10001;
-    
     /** The number of seeds that the player starts with when they first run the game */
     private static final int PLAYER_STARTING_SEEDS = 20;
     
@@ -160,7 +157,7 @@ public class FlowerActivity extends Activity {
             mBillingHelper = new BillingHelper(this);
             
             // Use the billing helper to query for inventory items
-            mBillingHelper.queryInventory(mGotInventoryListener, true, null, null);
+            mBillingHelper.queryInventory(mGotInventoryListener, true, null);
         }
         catch (Exception e) {
         	Log.e(TAG, "Exception occurred in FlowerActivity.onCreate(). The exception message was: "
@@ -241,8 +238,7 @@ public class FlowerActivity extends Activity {
         String payload = "";
         
         try {
-            mBillingHelper.launchPurchaseFlow(this, ITEM_SEEDS, RC_REQUEST,
-                    mPurchaseFinishedListener, payload);
+            mBillingHelper.launchPurchaseFlow(this, ITEM_SEEDS, ItemType.IN_APP, mPurchaseFinishedListener, payload);
         }
         catch (Exception e) {
         	Log.e(TAG, "Exception occurred in FlowerActivity.onBuySeedsButtonClicked(). The exception message was:\n"
@@ -263,8 +259,7 @@ public class FlowerActivity extends Activity {
         String payload = "";
         
         try {
-	        mBillingHelper.launchPurchaseFlow(this, ITEM_PREMIUM_THEME, RC_REQUEST,
-	                mPurchaseFinishedListener, payload);
+	        mBillingHelper.launchPurchaseFlow(this, ITEM_PREMIUM_THEME, ItemType.IN_APP, mPurchaseFinishedListener, payload);
         }
         catch (Exception e) {
         	Log.e(TAG, "Exception occurred in FlowerActivity.onUpgradeAppButtonClicked(). The exception message was:\n"
@@ -291,9 +286,7 @@ public class FlowerActivity extends Activity {
         Log.d(TAG, "Launching purchase flow for magical water subscription.");
         
         try {
-	        mBillingHelper.launchPurchaseFlow(this,
-	                ITEM_MAGICAl_WATER, ItemType.SUBSCRIPTION,
-	                RC_REQUEST, mPurchaseFinishedListener, payload);
+	        mBillingHelper.launchPurchaseFlow(this, ITEM_MAGICAl_WATER, ItemType.SUBSCRIPTION, mPurchaseFinishedListener, payload);
 	    }
 	    catch (Exception e) {
 	    	Log.e(TAG, "Exception occurred in FlowerActivity.onBuyMagicalWaterButtonClicked(). The exception message was:\n"
@@ -404,7 +397,7 @@ public class FlowerActivity extends Activity {
 	                		+ "Message: " + result.getMessage());
 	                setWaitScreen(false);
 	                // Use the billing helper to query for inventory items
-	                mBillingHelper.queryInventory(mGotInventoryListener, true, null, null);
+	                mBillingHelper.queryInventory(mGotInventoryListener, true, null);
 	                return;
 	            }
 	            
@@ -413,7 +406,7 @@ public class FlowerActivity extends Activity {
 	                complain("Error purchasing item. Developer payload verification failed.");
 	                setWaitScreen(false);
 	                // Use the billing helper to query for inventory items
-	                mBillingHelper.queryInventory(mGotInventoryListener, true, null, null);
+	                mBillingHelper.queryInventory(mGotInventoryListener, true, null);
 	                return;
 	            }
 	            
@@ -451,7 +444,7 @@ public class FlowerActivity extends Activity {
         }
     };
 
-    // Called when consumption is complete
+    // Called when an attempt to consume an item has finished
     private BillingHelper.OnConsumeFinishedListener mConsumeFinishedListener = new BillingHelper.OnConsumeFinishedListener() {
         public void onConsumeFinished(PurchasedItem purchase, BillingResult result) {
             Log.d(TAG, "Consumption finished. Purchase: " + purchase + ", result: " + result);
